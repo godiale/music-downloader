@@ -11,10 +11,14 @@ def extract_file_name(url):
     return url.split(sep='/')[-1]
 
 
-def download_file(url, save_dir):
+def download_file_if_absent(url, save_dir):
     file_name = extract_file_name(url)
-    print(f"{datetime.now()} Start downloading {file_name}")
+    print(f"{datetime.now()} Checking {file_name}")
     full_path = Path(save_dir) / file_name
+    if full_path.exists():
+        print(f"{datetime.now()} {file_name} already downloaded, skipping")
+        return
+    print(f"{datetime.now()} Start downloading {file_name}")
     urllib.request.urlretrieve(url, full_path)
     print(f"{datetime.now()} Finish downloading {file_name}")
 
@@ -28,7 +32,7 @@ def init_urllib():
 def main():
     init_urllib()
     Path(SAVE_DIR).mkdir(parents=True, exist_ok=True)
-    download_file(FILE_URL, SAVE_DIR)
+    download_file_if_absent(FILE_URL, SAVE_DIR)
 
 
 if __name__ == '__main__':
