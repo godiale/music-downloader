@@ -10,9 +10,11 @@ DNBRADIO_SEARCH_URL = 'https://dnbradio.com/?isSearch=1&pc=LiveMixes&search=ritc
 SAVE_DIR = 'C:/Users/godin/Music'
 
 
-def init_logging():
+def init_logging(filename):
     with open('logger.yaml', 'r') as stream:
         config = yaml.load(stream, Loader=yaml.FullLoader)
+    config['handlers']['file']['filename'] = f'log/{filename}'
+    Path('log').mkdir(exist_ok=True)
     logging.config.dictConfig(config)
 
 
@@ -22,14 +24,14 @@ def extract_file_name(url):
 
 def download_file_if_absent(url, save_dir):
     file_name = extract_file_name(url)
-    logging.info(f"Checking {file_name}")
+    logger.info(f"Checking {file_name}")
     full_path = Path(save_dir) / file_name
     if full_path.exists():
-        logging.info(f"{file_name} already downloaded, skipping")
+        logger.info(f"{file_name} already downloaded, skipping")
         return
-    logging.info(f"Start downloading {file_name}")
+    logger.info(f"Start downloading {file_name}")
     urllib.request.urlretrieve(url, full_path)
-    logging.info(f"Finish downloading {file_name}")
+    logger.info(f"Finish downloading {file_name}")
 
 
 def init_urllib():
@@ -39,19 +41,18 @@ def init_urllib():
 
 
 def get_links(url):
-    logging.info(f"Getting links from {url}")
+    logger.info(f"Getting links from {url}")
     req = urllib.request.Request(url)
     html_page = urllib.request.urlopen(req)
     soup = BeautifulSoup(html_page, "html5lib")
     links = []
     for link in soup.findAll('a'):
         links.append(link.get('href'))
-    logging.info(f"Collected {len(links)} links")
+    logger.info(f"Collected {len(links)} links")
     return links
 
 
 def main():
-    init_logging()
     init_urllib()
     Path(SAVE_DIR).mkdir(parents=True, exist_ok=True)
     download_links = get_links(DNBRADIO_SEARCH_URL)
@@ -61,4 +62,6 @@ def main():
 
 
 if __name__ == '__main__':
+    init_logging(filename='dnbradio_ritchey_coffee.log')
+    logger = logging.getLogger(__name__)
     main()
