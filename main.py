@@ -1,10 +1,12 @@
+import re
 import yaml
 import logging.config
 import urllib.request
 from pathlib import Path
+from bs4 import BeautifulSoup
 
-FILE_URL = 'https://dnbradio.com/podcast/dl/livesets/' \
-           'ritchey_LIVE_on_DNBRADIO.COM_20141205_0900_-_coffee_n_bass__120514__cup001.mp3'
+
+DNBRADIO_SEARCH_URL = 'https://dnbradio.com/?isSearch=1&pc=LiveMixes&search=ritchey&frm_event=search'
 SAVE_DIR = 'C:/Users/godin/Music'
 
 
@@ -36,11 +38,26 @@ def init_urllib():
     urllib.request.install_opener(opener)
 
 
+def get_links(url):
+    logging.info(f"Getting links from {url}")
+    req = urllib.request.Request(url)
+    html_page = urllib.request.urlopen(req)
+    soup = BeautifulSoup(html_page, "html5lib")
+    links = []
+    for link in soup.findAll('a'):
+        links.append(link.get('href'))
+    logging.info(f"Collected {len(links)} links")
+    return links
+
+
 def main():
     init_logging()
     init_urllib()
     Path(SAVE_DIR).mkdir(parents=True, exist_ok=True)
-    download_file_if_absent(FILE_URL, SAVE_DIR)
+    download_links = get_links(DNBRADIO_SEARCH_URL)
+    for link in download_links:
+        if re.search('.mp3$', link, re.IGNORECASE) and re.search('coffee', link, re.IGNORECASE):
+            download_file_if_absent(link, SAVE_DIR)
 
 
 if __name__ == '__main__':
