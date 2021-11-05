@@ -30,7 +30,16 @@ def download_file_if_absent(url, save_dir):
         logger.info(f"{file_name} already downloaded, skipping")
         return
     logger.info(f"Start downloading {file_name}")
-    urllib.request.urlretrieve(url, full_path)
+    try:
+        temp_file, headers = urllib.request.urlretrieve(url)
+        expected_size = int(headers['Content-Length'])
+        downloaded_size = Path(temp_file).stat().st_size
+        if expected_size != downloaded_size:
+            raise RuntimeError(f"Expected size {expected_size} is not equal to "
+                               f"downloaded size {downloaded_size} for {file_name}")
+        Path(temp_file).rename(full_path)
+    finally:
+        urllib.request.urlcleanup()
     logger.info(f"Finish downloading {file_name}")
 
 
@@ -41,7 +50,7 @@ def init_urllib():
 
 
 def get_links(url):
-    logger.info(f"Getting links from {url}")
+    logger.info(f"Collecting links from {url}")
     req = urllib.request.Request(url)
     html_page = urllib.request.urlopen(req)
     soup = BeautifulSoup(html_page, "html5lib")
