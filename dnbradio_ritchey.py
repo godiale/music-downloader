@@ -30,16 +30,13 @@ def download_file_if_absent(url, save_dir):
         logger.info(f"{file_name} already downloaded, skipping")
         return
     logger.info(f"Start downloading {file_name}")
-    try:
-        temp_file, headers = urllib.request.urlretrieve(url)
-        expected_size = int(headers['Content-Length'])
-        downloaded_size = Path(temp_file).stat().st_size
-        if expected_size != downloaded_size:
-            raise RuntimeError(f"Expected size {expected_size} is not equal to "
-                               f"downloaded size {downloaded_size} for {file_name}")
-        Path(temp_file).rename(full_path)
-    finally:
-        urllib.request.urlcleanup()
+    temp_file, headers = urllib.request.urlretrieve(url)
+    expected_size = int(headers['Content-Length'])
+    downloaded_size = Path(temp_file).stat().st_size
+    if expected_size != downloaded_size:
+        raise RuntimeError(f"Expected size {expected_size} is not equal to "
+                           f"downloaded size {downloaded_size} for {file_name}")
+    Path(temp_file).rename(full_path)
     logger.info(f"Finish downloading {file_name}")
 
 
@@ -62,12 +59,15 @@ def get_links(url):
 
 
 def main():
-    init_urllib()
-    Path(SAVE_DIR).mkdir(parents=True, exist_ok=True)
-    download_links = get_links(DNBRADIO_SEARCH_URL)
-    for link in download_links:
-        if re.search('.mp3$', link, re.IGNORECASE) and re.search('coffee', link, re.IGNORECASE):
-            download_file_if_absent(link, SAVE_DIR)
+    try:
+        init_urllib()
+        Path(SAVE_DIR).mkdir(parents=True, exist_ok=True)
+        download_links = get_links(DNBRADIO_SEARCH_URL)
+        for link in download_links:
+            if re.search('.mp3$', link, re.IGNORECASE) and re.search('coffee', link, re.IGNORECASE):
+                download_file_if_absent(link, SAVE_DIR)
+    finally:
+        urllib.request.urlcleanup()
 
 
 if __name__ == '__main__':
