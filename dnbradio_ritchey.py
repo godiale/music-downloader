@@ -1,5 +1,6 @@
 import re
 import yaml
+import ssl
 import logging.config
 import urllib.request
 from pathlib import Path
@@ -8,6 +9,7 @@ from bs4 import BeautifulSoup
 
 DNBRADIO_SEARCH_URL = 'https://dnbradio.com/?isSearch=1&pc=LiveMixes&search=ritchey&frm_event=search'
 SAVE_DIR = 'C:/Users/godin/Music'
+DISABLE_SSL_VERIFICATION = False
 
 
 def init_logging(filename):
@@ -41,6 +43,11 @@ def download_file_if_absent(url, save_dir):
 
 
 def init_urllib():
+    if DISABLE_SSL_VERIFICATION:
+        # https://stackoverflow.com/a/54385130/17227388
+        # noinspection PyUnresolvedReferences
+        # noinspection PyProtectedMember
+        ssl._create_default_https_context = ssl._create_unverified_context
     opener = urllib.request.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     urllib.request.install_opener(opener)
